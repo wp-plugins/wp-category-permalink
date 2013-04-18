@@ -4,7 +4,7 @@ Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_i
 Tags: category, permalink
 Requires at least: 3.5
 Tested up to: 3.5.1
-Stable tag: 0.1.0
+Stable tag: 0.1.2
 
 Allows manual selection of a 'main' category for each post for better permalinks and SEO.
 

@@ -3,7 +3,7 @@
 Plugin Name: WP Category Permalink
 Plugin URI: http://www.meow.fr/wp-category-permalink
 Description: Allows manual selection of a 'main' category for each post for better permalinks and SEO.
-Version: 0.1.0
+Version: 0.1.2
 Author: Jordy Meow
 Author URI: http://www.meow.fr
 Remarks: This plugin was inspired by the Hikari Category Permalink. The way it works on the client-side is similar, and the JS file is actually the same one with a bit more code added to it.
