@@ -6,13 +6,13 @@ Requires at least: 3.5
 Tested up to: 3.5.1
 Stable tag: 0.1.0
 
-This plugin allows you to select a 'main' category for your posts, for better permalinks and SEO. It uses the same meta data as the "Hikari Category Permalink" and the "sCategory Permalink", but it has been rewritten using better and cleaner code. 
-	
-The chosen category is shown in bold on the 'Posts List' page and the 'Post Edit' page. You can select a different permalink category on the 'Post Edit' page using the 'Categories' box (hover over the categories and click on 'Permalink' to select one, then save your post).
+Allows manual selection of a 'main' category for each post for better permalinks and SEO.
 
 == Description ==
 
-Allows manual selection of a 'main' category for each post for better permalinks and SEO.
+This plugin allows you to select a 'main' category for your posts, for better permalinks and SEO. It uses the same meta data as the "Hikari Category Permalink" and the "sCategory Permalink", but it has been rewritten using better and cleaner code. 
+	
+The chosen category is shown in bold on the 'Posts List' page and the 'Post Edit' page. You can select a different permalink category on the 'Post Edit' page using the 'Categories' box (hover over the categories and click on 'Permalink' to select one, then save your post).
 
 Languages: English, French.
 
