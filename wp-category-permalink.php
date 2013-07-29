@@ -47,7 +47,12 @@ function mwcp_custom_columns( $column, $post_id ) {
 		}
 		else {
 			$cat = get_the_category( $post_id );
-			echo $cat[0]->name;
+			if ( count($cat) > 1 ) {
+				echo '<span style="color: red;">' . $cat[0]->name . '</span>';
+			}
+			else if ( count($cat) == 1 ) {
+				echo $cat[0]->name;
+			}
 		}
 		echo "</span>";
 	}
@@ -122,7 +127,7 @@ add_filter( 'post_link_category', 'mwcp_post_link_category', 10, 3 );
 function mwcp_post_link_category( $cat, $cats, $post ) {
 
 	$catmeta = get_post_meta($post->ID, '_category_permalink', true);
-//	$cat = get_category( $catmeta );
+	//	$cat = get_category( $catmeta );
 	foreach ( $cats as $cat ) {
 		if ( $cat->term_id == $catmeta ) {
 			return $cat;

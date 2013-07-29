@@ -61,11 +61,14 @@
 jQuery(document).ready(function() {
     jQuery('.posts tr').each(function () {
       var category = jQuery(this).children('.column-scategory_permalink').text();
+      var categoryWithHtml = jQuery(this).children('.column-scategory_permalink').html();
       if ( !category ) {
         return;
       }
-      var categoriesHtml = jQuery(this).children('.column-categories').html();
-      categoriesHtml = categoriesHtml.replace(category, '<b>' + category + '</b>');
-      jQuery(this).children('.column-categories').html(categoriesHtml);
+      else {
+          var content = jQuery(this).children('.column-categories').html();
+          content = content.replace('>'+category+'<', '><b>' + categoryWithHtml + '</b><');
+          jQuery(this).children('.column-categories').html(content);
+        }
     });
 });
