@@ -3,8 +3,8 @@ Contributors: TigrouMeow
 Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=JAWE2XWH7ZE5U
 Tags: category, permalink
 Requires at least: 3.5
-Tested up to: 3.5.1
-Stable tag: 0.1.2
+Tested up to: 3.6
+Stable tag: 0.1.4
 
 Allows manual selection of a 'main' category for each post for better permalinks and SEO.
 
@@ -39,6 +39,9 @@ Yes, sure, you can! But since my plugins got popular, I get many emails everyday
 1. Pick the category you'd like to have for the permalink.
 
 == Changelog ==
+
+= 0.1.4 =
+* Add: default category will be shown in red if no category was picked.
 
 = 0.1 =
 * First release.
