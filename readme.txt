@@ -3,7 +3,7 @@ Contributors: TigrouMeow
 Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=JAWE2XWH7ZE5U
 Tags: category, permalink
 Requires at least: 3.5
-Tested up to: 3.8
+Tested up to: 4.0
 Stable tag: 1.1.0
 
 Allows manual selection of a 'main' category for each post for better permalinks and SEO.
