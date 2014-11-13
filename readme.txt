@@ -4,7 +4,7 @@ Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_i
 Tags: category, permalink
 Requires at least: 3.5
 Tested up to: 4.0
-Stable tag: 1.2
+Stable tag: 1.4
 
 Allows manual selection of a 'main' category for each post for better permalinks and SEO.
 
@@ -39,6 +39,9 @@ Yes, sure, you can! But since my plugins got popular, I get many emails everyday
 1. Pick the category you'd like to have for the permalink.
 
 == Changelog ==
+
+= 1.4 =
+* Links, readme, version.
 
 = 1.2 =
 * Works with WordPress 4.0.
