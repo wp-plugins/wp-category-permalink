@@ -67,8 +67,10 @@ jQuery(document).ready(function() {
       }
       else {
           var content = jQuery(this).children('.column-categories').html();
-          content = content.replace('>'+category+'<', '><b>' + categoryWithHtml + '</b><');
-          jQuery(this).children('.column-categories').html(content);
+          if (content) {
+            content = content.replace('>'+category+'<', '><b>' + categoryWithHtml + '</b><');
+            jQuery(this).children('.column-categories').html(content);
+          }
         }
     });
 });
