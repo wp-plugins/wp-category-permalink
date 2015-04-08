@@ -3,7 +3,7 @@
 Plugin Name: WP Category Permalink
 Plugin URI: http://www.meow.fr
 Description: Allows manual selection of a 'main' category for each post for better permalinks and SEO. Pro version adds support for WooCommerce products.
-Version: 1.7
+Version: 2.0
 Author: Jordy Meow, Yaniv Friedensohn
 Author URI: http://www.meow.fr
 Remarks: This plugin was inspired by the Hikari Category Permalink. The way it works on the client-side is similar, and the JS file is actually the same one with a bit more code added to it.
@@ -90,10 +90,11 @@ add_action( 'admin_enqueue_scripts', 'mwcp_admin_enqueue_scripts' );
 
 function mwcp_admin_enqueue_scripts () {
 	global $post_type;
-	
-	if ($post_type == 'product' && wpcp_woocommerce_support() == false || wpcp_is_pro() == false) {return;}
-	
-	wp_enqueue_script( 'wp-category-permalink.js', plugins_url('/wp-category-permalink.js', __FILE__), array( 'jquery' ), '1.6', false );
+
+	// Load the script if it's a normal post OR a anything else but with WooCommerce support and Pro
+	if ( $post_type == 'post' || wpcp_woocommerce_support() && wpcp_is_pro() ) {
+		wp_enqueue_script( 'wp-category-permalink.js', plugins_url('/wp-category-permalink.js', __FILE__), array( 'jquery' ), '1.6', false );
+	}
 }
 
 /**
@@ -213,6 +214,20 @@ add_action( 'admin_menu', 'wpcp_admin_menu' );
 
 function wpcp_admin_menu() {
 	add_options_page( 'Category Permalink', 'Category Permalink', 'manage_options', 'wpcp_settings', 'wpcp_settings_page' );
+}
+
+function wpcp_getoption( $option, $section, $default = '' ) {
+	$options = get_option( $section );
+	if ( isset( $options[$option] ) ) {
+		if ( $options[$option] == "off" ) {
+			return false;
+		}
+		if ( $options[$option] == "on" ) {
+			return true;
+		}
+		return $options[$option];
+  }
+	return $default;
 }
 
 /**

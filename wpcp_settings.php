@@ -22,20 +22,6 @@ function wpcp_settings_page() {
 	jordy_meow_footer();
 }
 
-function wpcp_getoption( $option, $section, $default = '' ) {
-	$options = get_option( $section );
-	if ( isset( $options[$option] ) ) {
-        if ( $options[$option] == "off" ) {
-            return false;
-        }
-        if ( $options[$option] == "on" ) {
-            return true;
-        }
-		return $options[$option];
-    }
-	return $default;
-}
-
 function wpcp_admin_init() {
     if ( isset( $_POST ) && isset( $_POST['wpcp_pro'] ) )
         wpcp_validate_pro( $_POST['wpcp_pro']['subscr_id'] );
@@ -82,12 +68,6 @@ function wpcp_admin_init() {
     $wpcp_settings_api->set_sections( $sections );
     $wpcp_settings_api->set_fields( $fields );
     $wpcp_settings_api->admin_init();
-}
-
-function wpcp_update_option( $option ) {
-	if ($option == 'wpcp_advanced') {
-		set_transient( 'wpcp_flush_rules', true );
-	}
 }
 
 ?>
