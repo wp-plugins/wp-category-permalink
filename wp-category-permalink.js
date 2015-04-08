@@ -7,9 +7,7 @@
       $(this).find('.tabs-panel label input[type=checkbox]').each(function() {
         var label = $(this).parent('label');
         var li = $(label).parent('li');
-        
         var link = '&nbsp;<a class="scategory_link">Permalink</a>';
-        
         label.after(link);
         $('.scategory_link', li).bind('click', onClick);
         $('input', label).bind('change', onChange);
@@ -23,11 +21,9 @@
     });
     
     function onClick(event) {
-      deselectAll();
-      
+      deselectAll(); 
       var current = $(this).prev('label').find('input').val();
-      
-      $('#in-popular-category-' + current + ',#in-category-' + current).each(function() {
+      $('#in-popular-category-' + current + ',#in-category-' + current + ',#in-product_cat-' + current + ',#in-popular-product_cat-' + current).each(function() {
         $(this).parent('label').css('fontWeight', 'bold');
         $(this).attr('checked', true);
       });
