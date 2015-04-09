@@ -1,12 +1,20 @@
 <?php
 /*
 Plugin Name: WP Category Permalink
-Plugin URI: http://www.meow.fr
+Plugin URI: http://apps.meow.fr
 Description: Allows manual selection of a 'main' category for each post for better permalinks and SEO. Pro version adds support for WooCommerce products.
-Version: 2.0
+Version: 2.1
 Author: Jordy Meow, Yaniv Friedensohn
 Author URI: http://www.meow.fr
 Remarks: This plugin was inspired by the Hikari Category Permalink. The way it works on the client-side is similar, and the JS file is actually the same one with a bit more code added to it.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
 
 Originally developed for two of my websites: 
 - Totoro Times (http://www.totorotimes.com) 
@@ -155,15 +163,13 @@ function mwcp_transition_post_status( $new_status, $old_status, $post ) {
  *
  */
 
-add_filter( 'post_link', 'update_permalink', 10, 2 );
-add_filter( 'post_type_link', 'update_permalink', 10, 2 );
+add_filter( 'post_link', 'wpcp_update_permalink', 10, 2 );
+add_filter( 'post_type_link', 'wpcp_update_permalink', 10, 2 );
 
-function update_permalink( $url, $post ) {
+function wpcp_update_permalink( $url, $post ) {
 	global $post_type;
 	
-	if ($post_type == 'product' && wpcp_woocommerce_support() == false) {return $url;}
-	
-	if (current_filter() == 'post_link') {
+	if ($post_type == 'post') {
 		
 		$permalink_structure = get_option('permalink_structure');
 		if (strpos($permalink_structure, '%category%') === false) {return $url;}
@@ -171,9 +177,10 @@ function update_permalink( $url, $post ) {
 		$terms = get_the_category( $post->ID );
 		if (empty($terms)) {return $url;}
 		foreach ($terms as $term) {
-			$cats[] = array('id' => $term->cat_ID, 'slug' => str_replace('%category%', $term->slug, $permalink_structure));
+			$cats[] = array('id' => $term->cat_ID, 'slug' => str_replace('%category%', rtrim( get_category_parents( $term->cat_ID, false, '/', true ), '/' ), $permalink_structure));
 		}
-	} else {
+		
+	} else if ($post_type == 'product' && wpcp_woocommerce_support()) {
 		
 		$arr = get_option('woocommerce_permalinks');
 		$permalink_structure = $arr['product_base'];
@@ -184,15 +191,16 @@ function update_permalink( $url, $post ) {
 			return $url;
 		}
 		foreach ( $terms as $term ) {
-			$cats[] = array('id' => $term->term_id, 'slug' => str_replace( '%product_cat%', $term->slug, $permalink_structure ) );
+			$cats[] = array('id' => $term->term_id, 'slug' => str_replace( '%product_cat%', rtrim(wpse85202_get_taxonomy_parents($term->term_id, 'product_cat', false, '/', true), '/' ), $permalink_structure ) );
 		}
-	}
+		
+	} else {return $url;}
 	
 	$category_permalink_id = (int) get_post_meta( $post->ID, '_category_permalink', true );
 	
 	foreach ( $cats as $cat ) {
 		if ( $cat['id'] == $category_permalink_id ) {
-			if (current_filter() == 'post_link') {
+			if ($post_type == 'post') {
 				if (strpos($cat['slug'], '%postname%') === false) {return $url;}
 				return site_url(str_replace('%postname%', $post->post_name, $cat['slug']));
 			} else {
@@ -292,3 +300,41 @@ function wpcp_validate_pro( $subscr_id ) {
 	update_option( 'wpcp_pro_status', __( "Your subscription is enabled." ) );
 	return true;
 }
+
+/**
+ * Retrieve category parents with separator for general taxonomies.
+ * Modified version of get_category_parents()
+ *
+ * @param int $id Category ID.
+ * @param string $taxonomy Optional, default is 'category'. 
+ * @param bool $link Optional, default is false. Whether to format with link.
+ * @param string $separator Optional, default is '/'. How to separate categories.
+ * @param bool $nicename Optional, default is false. Whether to use nice name for display.
+ * @param array $visited Optional. Already linked to categories to prevent duplicates.
+ * @return string
+ */
+function wpse85202_get_taxonomy_parents( $id, $taxonomy = 'category', $link = false, $separator = '/', $nicename = false, $visited = array() ) {
+
+            $chain = '';
+            $parent = get_term( $id, $taxonomy );
+
+            if ( is_wp_error( $parent ) )
+                    return $parent;
+
+            if ( $nicename )
+                    $name = $parent->slug;
+            else
+                    $name = $parent->name;
+
+            if ( $parent->parent && ( $parent->parent != $parent->term_id ) && !in_array( $parent->parent, $visited ) ) {
+                    $visited[] = $parent->parent;
+                    $chain .= wpse85202_get_taxonomy_parents( $parent->parent, $taxonomy, $link, $separator, $nicename, $visited );
+            }
+
+            if ( $link )
+                    $chain .= '<a href="' . esc_url( get_term_link( $parent,$taxonomy ) ) . '" title="' . esc_attr( sprintf( __( "View all posts in %s" ), $parent->name ) ) . '">'.$name.'</a>' . $separator;
+            else
+                    $chain .= $name.$separator;
+
+            return $chain;
+    }
