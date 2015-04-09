@@ -3,7 +3,7 @@
 Plugin Name: WP Category Permalink
 Plugin URI: http://apps.meow.fr
 Description: Allows manual selection of a 'main' category for each post for better permalinks and SEO. Pro version adds support for WooCommerce products.
-Version: 2.1
+Version: 2.2.0
 Author: Jordy Meow, Yaniv Friedensohn
 Author URI: http://www.meow.fr
 Remarks: This plugin was inspired by the Hikari Category Permalink. The way it works on the client-side is similar, and the JS file is actually the same one with a bit more code added to it.
@@ -177,7 +177,7 @@ function wpcp_update_permalink( $url, $post ) {
 		$terms = get_the_category( $post->ID );
 		if (empty($terms)) {return $url;}
 		foreach ($terms as $term) {
-			$cats[] = array('id' => $term->cat_ID, 'slug' => str_replace('%category%', rtrim( get_category_parents( $term->cat_ID, false, '/', true ), '/' ), $permalink_structure));
+			$cats[] = array('id' => $term->cat_ID, 'link' => str_replace('%category%', rtrim( get_category_parents( $term->cat_ID, false, '/', true ), '/' ), $permalink_structure));
 		}
 		
 	} else if ($post_type == 'product' && wpcp_woocommerce_support()) {
@@ -191,7 +191,7 @@ function wpcp_update_permalink( $url, $post ) {
 			return $url;
 		}
 		foreach ( $terms as $term ) {
-			$cats[] = array('id' => $term->term_id, 'slug' => str_replace( '%product_cat%', rtrim(wpse85202_get_taxonomy_parents($term->term_id, 'product_cat', false, '/', true), '/' ), $permalink_structure ) );
+			$cats[] = array('id' => $term->term_id, 'link' => str_replace( '%product_cat%', rtrim(wpse85202_get_taxonomy_parents($term->term_id, 'product_cat', false, '/', true), '/' ), $permalink_structure ) );
 		}
 		
 	} else {return $url;}
@@ -201,10 +201,9 @@ function wpcp_update_permalink( $url, $post ) {
 	foreach ( $cats as $cat ) {
 		if ( $cat['id'] == $category_permalink_id ) {
 			if ($post_type == 'post') {
-				if (strpos($cat['slug'], '%postname%') === false) {return $url;}
-				return site_url(str_replace('%postname%', $post->post_name, $cat['slug']));
+				return site_url(str_replace( array( '%year%', '%monthnum%', '%day%', '%hour%', '%minute%', '%second%', '%post_id%', '%postname%', '%author%' ), array( get_the_date( 'Y', $post->ID ), get_the_date( 'm', $post->ID ), get_the_date( 'd', $post->ID ), get_the_date( 'H', $post->ID ), get_the_date( 'i', $post->ID ), get_the_date( 's', $post->ID ), $post->ID, $post->post_name, get_the_author_meta( 'user_nicename', $post->post_author )), $cat['link']));
 			} else {
-				return site_url($cat['slug'].'/'.$post->post_name.'/');
+				return site_url(str_replace( array( '%year%', '%monthnum%', '%day%', '%hour%', '%minute%', '%second%', '%post_id%', '%postname%', '%author%' ), array( get_the_date( 'Y', $post->ID ), get_the_date( 'm', $post->ID ), get_the_date( 'd', $post->ID ), get_the_date( 'H', $post->ID ), get_the_date( 'i', $post->ID ), get_the_date( 's', $post->ID ), $post->ID, $post->post_name, get_the_author_meta( 'user_nicename', $post->post_author )), $cat['link']) .'/' . $post->post_name . '/');
 			}
 		}
 	}
