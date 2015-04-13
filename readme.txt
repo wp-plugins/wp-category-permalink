@@ -1,10 +1,10 @@
 === WP Category Permalink ===
 Contributors: TigrouMeow, fryaniv
 Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=H2S7S3G4XMJ6J
-Tags: category, permalink
+Tags: category, permalink, woocommerce
 Requires at least: 3.5
 Tested up to: 4.1.1
-Stable tag: 2.2.0
+Stable tag: 2.3.0
 
 Allows manual selection of a 'main' category for each post and WooCommerce product for better permalinks and SEO.
 
@@ -37,6 +37,10 @@ Yes, sure, you can! But since my plugins got popular, I get many emails everyday
 1. Pick the category you'd like to have for the permalink.
 
 == Changelog ==
+
+= 2.2.2 =
+* Fix: Restored post behaviour.
+* Fix: Fixed warnings.
 
 = 2.2.0 =
 * Fix: Tags structure issue.

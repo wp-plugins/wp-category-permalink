@@ -3,7 +3,7 @@
 Plugin Name: WP Category Permalink
 Plugin URI: http://apps.meow.fr
 Description: Allows manual selection of a 'main' category for each post for better permalinks and SEO. Pro version adds support for WooCommerce products.
-Version: 2.2.0
+Version: 2.2.2
 Author: Jordy Meow, Yaniv Friedensohn
 Author URI: http://www.meow.fr
 Remarks: This plugin was inspired by the Hikari Category Permalink. The way it works on the client-side is similar, and the JS file is actually the same one with a bit more code added to it.
@@ -36,7 +36,9 @@ add_filter( 'manage_posts_columns' , 'mwcp_manage_posts_columns' );
 function mwcp_manage_posts_columns( $columns ) {
 	global $post_type;
 	
-	if ($post_type == 'product' && wpcp_woocommerce_support() == false) {return $columns;}
+	if ('product' == $post_type && ! wpcp_woocommerce_support() ) {
+		return $columns;
+	}
 
 	$hidden_columns = get_user_option( "manageedit-postcolumnshidden" );
 	if ( !in_array( 'scategory_permalink', (array) $hidden_columns) ) {
@@ -51,36 +53,37 @@ add_action( 'manage_posts_custom_column' , 'mwcp_custom_columns', 10, 2 );
 function mwcp_custom_columns( $column, $post_id ) {
 	global $post_type;
 	
-	if ($post_type == 'product' && wpcp_woocommerce_support() == false) {return;}
+	if ('product' == $post_type && ! wpcp_woocommerce_support() ) {
+		return $column;
+	}
 	
 	if ( $column == 'scategory_permalink' ) {
 		$cat_id = get_post_meta( $post_id , '_category_permalink', true ); 
 		echo "<span class='scategory_permalink_name'>";
 		if ( $cat_id != null ) {
 			$cat = get_category( $cat_id );
-			if ( !isset( $cat ) ) {
+			if ( ! isset( $cat ) ) {
 				$terms = get_the_terms( $post_id, 'product_cat' );
-				if ( empty( $terms ) ) {
+				if ( empty( $terms ) || is_wp_error( $terms ) ) {
 					return $column;
 				}
 				echo $terms[$cat_id]->name;
 			} else {
 				echo $cat->name;
 			}
-		} 
-		else {
+		} else {
 			$cat = get_the_category( $post_id );
-			if (empty($cat)) {
+			if ( empty( $cat ) || is_wp_error( $cat ) ) {
 				$terms = get_the_terms( $post_id, 'product_cat' );
-				if (empty( $terms ) ) { 
+				if ( empty( $terms ) || is_wp_error( $terms ) ) { 
 					return $column; 
 				}
-				$cat = array_values($terms);
+				$cat = array_values( $terms );
 			}
-			if ( count($cat) > 1 ) {
+			if ( count( $cat ) > 1 ) {
 				echo '<span style="color: red;">' . $cat[0]->name . '</span>';
 			}
-			else if ( count($cat) == 1 ) {
+			else if ( count( $cat ) == 1 ) {
 				echo $cat[0]->name;
 			}
 		}
@@ -100,7 +103,7 @@ function mwcp_admin_enqueue_scripts () {
 	global $post_type;
 
 	// Load the script if it's a normal post OR a anything else but with WooCommerce support and Pro
-	if ( $post_type == 'post' || wpcp_woocommerce_support() && wpcp_is_pro() ) {
+	if ( 'post' == $post_type || wpcp_woocommerce_support() && wpcp_is_pro() ) {
 		wp_enqueue_script( 'wp-category-permalink.js', plugins_url('/wp-category-permalink.js', __FILE__), array( 'jquery' ), '1.6', false );
 	}
 }
@@ -141,7 +144,7 @@ function mwcp_transition_post_status( $new_status, $old_status, $post ) {
 	if ( isset( $scategory_permalink ) ) {
 		$cats = wp_get_post_categories( $post->ID );
 		
-		if (empty($cats)) {
+		if ( empty( $cats ) || is_wp_error( $cats ) ) {
 			update_post_meta( $post->ID, '_category_permalink', $scategory_permalink );
 			return;
 		}
@@ -163,47 +166,74 @@ function mwcp_transition_post_status( $new_status, $old_status, $post ) {
  *
  */
 
-add_filter( 'post_link', 'wpcp_update_permalink', 10, 2 );
+add_filter( 'post_link_category', 'mwcp_post_link_category', 10, 3 );
+
+// Return the category set-up in '_category_permalink', otherwise return the default category
+function mwcp_post_link_category( $cat, $cats, $post ) {
+
+	$catmeta = get_post_meta($post->ID, '_category_permalink', true);
+	//	$cat = get_category( $catmeta );
+	foreach ( $cats as $cat ) {
+		if ( $cat->term_id == $catmeta ) {
+			return $cat;
+		}
+	}
+	return $cat;
+}
+
+
 add_filter( 'post_type_link', 'wpcp_update_permalink', 10, 2 );
 
 function wpcp_update_permalink( $url, $post ) {
 	global $post_type;
 	
-	if ($post_type == 'post') {
-		
-		$permalink_structure = get_option('permalink_structure');
-		if (strpos($permalink_structure, '%category%') === false) {return $url;}
-		
-		$terms = get_the_category( $post->ID );
-		if (empty($terms)) {return $url;}
-		foreach ($terms as $term) {
-			$cats[] = array('id' => $term->cat_ID, 'link' => str_replace('%category%', rtrim( get_category_parents( $term->cat_ID, false, '/', true ), '/' ), $permalink_structure));
+	if ( 'post' == $post_type ) {
+		$permalink_structure = get_option( 'permalink_structure' );
+		if ( false === strpos( $permalink_structure, '%category%' ) ) {
+			return $url;
 		}
 		
-	} else if ($post_type == 'product' && wpcp_woocommerce_support()) {
-		
-		$arr = get_option('woocommerce_permalinks');
-		$permalink_structure = $arr['product_base'];
-		if (strpos($permalink_structure, '%product_cat%') === false) {return $url;}
-		
-		$terms = get_the_terms( $post->ID, 'product_cat' );
-		if ( empty( $terms ) ) {
+		$terms = get_the_category( $post->ID );
+		if ( empty( $terms ) || is_wp_error( $terms ) ) {
 			return $url;
 		}
 		foreach ( $terms as $term ) {
-			$cats[] = array('id' => $term->term_id, 'link' => str_replace( '%product_cat%', rtrim(wpse85202_get_taxonomy_parents($term->term_id, 'product_cat', false, '/', true), '/' ), $permalink_structure ) );
+			$cats[] = array(
+			'id'		=> $term->cat_ID,
+			'link'	=> str_replace( '%category%', rtrim( get_category_parents( $term->cat_ID, false, '/', true ), '/' ), $permalink_structure ),
+			);
 		}
 		
-	} else {return $url;}
+	} elseif ( 'product' == $post_type && wpcp_woocommerce_support() ) {
+		$arr = get_option( 'woocommerce_permalinks' );
+		$permalink_structure = $arr['product_base'];
+		if (false === strpos( $permalink_structure, '%product_cat%' ) ) {
+			return $url;
+		}
+		
+		$terms = get_the_terms( $post->ID, 'product_cat' );
+		if ( empty( $terms ) || is_wp_error( $terms ) ) {
+			return $url;
+		}
+		foreach ( $terms as $term ) {
+			$cats[] = array(
+			'id' => $term->term_id,
+			'link' => str_replace( '%product_cat%', rtrim( wpse85202_get_taxonomy_parents( $term->term_id, 'product_cat', false, '/', true ), '/' ), $permalink_structure ),
+			);
+		}
+		
+	} else {
+		return $url;
+	}
 	
 	$category_permalink_id = (int) get_post_meta( $post->ID, '_category_permalink', true );
 	
 	foreach ( $cats as $cat ) {
 		if ( $cat['id'] == $category_permalink_id ) {
-			if ($post_type == 'post') {
-				return site_url(str_replace( array( '%year%', '%monthnum%', '%day%', '%hour%', '%minute%', '%second%', '%post_id%', '%postname%', '%author%' ), array( get_the_date( 'Y', $post->ID ), get_the_date( 'm', $post->ID ), get_the_date( 'd', $post->ID ), get_the_date( 'H', $post->ID ), get_the_date( 'i', $post->ID ), get_the_date( 's', $post->ID ), $post->ID, $post->post_name, get_the_author_meta( 'user_nicename', $post->post_author )), $cat['link']));
+			if ( 'post' == post_type ) {
+				return site_url( str_replace( array( '%year%', '%monthnum%', '%day%', '%hour%', '%minute%', '%second%', '%post_id%', '%postname%', '%author%' ), array( get_the_date( 'Y', $post->ID ), get_the_date( 'm', $post->ID ), get_the_date( 'd', $post->ID ), get_the_date( 'H', $post->ID ), get_the_date( 'i', $post->ID ), get_the_date( 's', $post->ID ), $post->ID, $post->post_name, get_the_author_meta( 'user_nicename', $post->post_author ) ), $cat['link'] ) );
 			} else {
-				return site_url(str_replace( array( '%year%', '%monthnum%', '%day%', '%hour%', '%minute%', '%second%', '%post_id%', '%postname%', '%author%' ), array( get_the_date( 'Y', $post->ID ), get_the_date( 'm', $post->ID ), get_the_date( 'd', $post->ID ), get_the_date( 'H', $post->ID ), get_the_date( 'i', $post->ID ), get_the_date( 's', $post->ID ), $post->ID, $post->post_name, get_the_author_meta( 'user_nicename', $post->post_author )), $cat['link']) .'/' . $post->post_name . '/');
+				return trailingslashit ( site_url( trailingslashit( str_replace( array( '%year%', '%monthnum%', '%day%', '%hour%', '%minute%', '%second%', '%post_id%', '%postname%', '%author%' ), array( get_the_date( 'Y', $post->ID ), get_the_date( 'm', $post->ID ), get_the_date( 'd', $post->ID ), get_the_date( 'H', $post->ID ), get_the_date( 'i', $post->ID ), get_the_date( 's', $post->ID ), $post->ID, $post->post_name, get_the_author_meta( 'user_nicename', $post->post_author ) ), $cat['link']) ) . $post->post_name ) );
 			}
 		}
 	}
