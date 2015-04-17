@@ -4,7 +4,7 @@ Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_i
 Tags: category, permalink, woocommerce
 Requires at least: 3.5
 Tested up to: 4.1.1
-Stable tag: 2.3.0
+Stable tag: 2.2.3
 
 Allows manual selection of a 'main' category for each post and WooCommerce product for better permalinks and SEO.
 
@@ -25,18 +25,21 @@ Languages: English, French.
 
 == Frequently Asked Questions ==
 
+= Can I contact you? =
+Please come on the support forums. We are two developers working on this plugin and Yaniv added support for WooCommerce. We will help you!
+
 = I donated, can I get rid of the donation button? =
 Of course. I don't like to see too many of those buttons neither ;) You can disable the donation buttons from all my plugins by adding this to your wp-config.php:
 `define('WP_HIDE_DONATION_BUTTONS', true);`
-
-= Can I contact you? =
-Yes, sure, you can! But since my plugins got popular, I get many emails everyday which consume almost 10% of my whole lifetime (not kidding! + it's rarely issues coming from the plugin itself). So now I ask you to visit my website <a href='http://www.totorotimes.com'>Totoro Times</a>, pick a page you like, and share it on Facebook, Twitter or your own website. I hope you understand :) Thanks a lot!
 
 == Screenshots ==
 
 1. Pick the category you'd like to have for the permalink.
 
 == Changelog ==
+
+= 2.2.3
+* Fix: Product permalink bug (permalink appeared correctly only on product page).
 
 = 2.2.2 =
 * Fix: Restored post behaviour.

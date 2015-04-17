@@ -3,7 +3,7 @@
 Plugin Name: WP Category Permalink
 Plugin URI: http://apps.meow.fr
 Description: Allows manual selection of a 'main' category for each post for better permalinks and SEO. Pro version adds support for WooCommerce products.
-Version: 2.2.2
+Version: 2.2.3
 Author: Jordy Meow, Yaniv Friedensohn
 Author URI: http://www.meow.fr
 Remarks: This plugin was inspired by the Hikari Category Permalink. The way it works on the client-side is similar, and the JS file is actually the same one with a bit more code added to it.
@@ -181,59 +181,41 @@ function mwcp_post_link_category( $cat, $cats, $post ) {
 	return $cat;
 }
 
-
 add_filter( 'post_type_link', 'wpcp_update_permalink', 10, 2 );
 
 function wpcp_update_permalink( $url, $post ) {
-	global $post_type;
-	
-	if ( 'post' == $post_type ) {
-		$permalink_structure = get_option( 'permalink_structure' );
-		if ( false === strpos( $permalink_structure, '%category%' ) ) {
-			return $url;
-		}
-		
-		$terms = get_the_category( $post->ID );
-		if ( empty( $terms ) || is_wp_error( $terms ) ) {
-			return $url;
-		}
-		foreach ( $terms as $term ) {
-			$cats[] = array(
-			'id'		=> $term->cat_ID,
-			'link'	=> str_replace( '%category%', rtrim( get_category_parents( $term->cat_ID, false, '/', true ), '/' ), $permalink_structure ),
-			);
-		}
-		
-	} elseif ( 'product' == $post_type && wpcp_woocommerce_support() ) {
+	if ( wpcp_woocommerce_support() ) {
+		// Check if product permalink base contains %product_cat%.
 		$arr = get_option( 'woocommerce_permalinks' );
 		$permalink_structure = $arr['product_base'];
 		if (false === strpos( $permalink_structure, '%product_cat%' ) ) {
 			return $url;
 		}
 		
+		//Check if _category_permalink is set.
+		$category_permalink = get_post_meta( $post->ID, '_category_permalink', true );
+		if ( empty( $category_permalink ) || is_wp_error( $terms ) ) {
+			return $url;
+		} else {
+			$category_permalink = (int) $category_permalink;
+		}
+		
+		//Check if product belongs to any product category.
 		$terms = get_the_terms( $post->ID, 'product_cat' );
 		if ( empty( $terms ) || is_wp_error( $terms ) ) {
 			return $url;
 		}
+		
 		foreach ( $terms as $term ) {
 			$cats[] = array(
 			'id' => $term->term_id,
 			'link' => str_replace( '%product_cat%', rtrim( wpse85202_get_taxonomy_parents( $term->term_id, 'product_cat', false, '/', true ), '/' ), $permalink_structure ),
 			);
 		}
-		
-	} else {
-		return $url;
-	}
 	
-	$category_permalink_id = (int) get_post_meta( $post->ID, '_category_permalink', true );
-	
-	foreach ( $cats as $cat ) {
-		if ( $cat['id'] == $category_permalink_id ) {
-			if ( 'post' == post_type ) {
-				return site_url( str_replace( array( '%year%', '%monthnum%', '%day%', '%hour%', '%minute%', '%second%', '%post_id%', '%postname%', '%author%' ), array( get_the_date( 'Y', $post->ID ), get_the_date( 'm', $post->ID ), get_the_date( 'd', $post->ID ), get_the_date( 'H', $post->ID ), get_the_date( 'i', $post->ID ), get_the_date( 's', $post->ID ), $post->ID, $post->post_name, get_the_author_meta( 'user_nicename', $post->post_author ) ), $cat['link'] ) );
-			} else {
-				return trailingslashit ( site_url( trailingslashit( str_replace( array( '%year%', '%monthnum%', '%day%', '%hour%', '%minute%', '%second%', '%post_id%', '%postname%', '%author%' ), array( get_the_date( 'Y', $post->ID ), get_the_date( 'm', $post->ID ), get_the_date( 'd', $post->ID ), get_the_date( 'H', $post->ID ), get_the_date( 'i', $post->ID ), get_the_date( 's', $post->ID ), $post->ID, $post->post_name, get_the_author_meta( 'user_nicename', $post->post_author ) ), $cat['link']) ) . $post->post_name ) );
+		foreach ( $cats as $cat ) {
+			if ( $cat['id'] == $category_permalink ) {
+				return trailingslashit( site_url( trailingslashit( str_replace( array( '%year%', '%monthnum%', '%day%', '%hour%', '%minute%', '%second%', '%post_id%', '%postname%', '%author%' ), array( get_the_date( 'Y', $post->ID ), get_the_date( 'm', $post->ID ), get_the_date( 'd', $post->ID ), get_the_date( 'H', $post->ID ), get_the_date( 'i', $post->ID ), get_the_date( 's', $post->ID ), $post->ID, $post->post_name, get_the_author_meta( 'user_nicename', $post->post_author ) ), $cat['link']) ) . $post->post_name ) );
 			}
 		}
 	}
