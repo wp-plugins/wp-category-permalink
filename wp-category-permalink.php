@@ -3,7 +3,7 @@
 Plugin Name: WP Category Permalink
 Plugin URI: http://apps.meow.fr
 Description: Allows manual selection of a 'main' category for each post for better permalinks and SEO. Pro version adds support for WooCommerce products.
-Version: 2.2.3
+Version: 2.2.4
 Author: Jordy Meow, Yaniv Friedensohn
 Author URI: http://www.meow.fr
 Remarks: This plugin was inspired by the Hikari Category Permalink. The way it works on the client-side is similar, and the JS file is actually the same one with a bit more code added to it.
@@ -67,7 +67,12 @@ function mwcp_custom_columns( $column, $post_id ) {
 				if ( empty( $terms ) || is_wp_error( $terms ) ) {
 					return $column;
 				}
-				echo $terms[$cat_id]->name;
+				
+				foreach ($terms as $term) {
+					if ($cat_id == $term->term_id) {
+						echo $term->name;
+					}
+				}
 			} else {
 				echo $cat->name;
 			}
@@ -102,10 +107,12 @@ add_action( 'admin_enqueue_scripts', 'mwcp_admin_enqueue_scripts' );
 function mwcp_admin_enqueue_scripts () {
 	global $post_type;
 
-	// Load the script if it's a normal post OR a anything else but with WooCommerce support and Pro
-	if ( 'post' == $post_type || wpcp_woocommerce_support() && wpcp_is_pro() ) {
-		wp_enqueue_script( 'wp-category-permalink.js', plugins_url('/wp-category-permalink.js', __FILE__), array( 'jquery' ), '1.6', false );
+	// If it's a WooCommerce product and wpcp_woocommerce_support() or wpcp_is_pro() are false then exit.
+	if ( 'product' == $post_type && ( ! wpcp_woocommerce_support() || ! wpcp_is_pro() ) ) {
+		return;
 	}
+	
+	wp_enqueue_script( 'wp-category-permalink.js', plugins_url('/wp-category-permalink.js', __FILE__), array( 'jquery' ), '1.6', false );
 }
 
 /**
@@ -133,7 +140,7 @@ function mwcp_post_js() {
 	if ( $post->ID ) {
 		$categoryID = get_post_meta( $post->ID, '_category_permalink', true );
 	}
-	echo "<script type=\"text/javascript\">jQuery('.categorydiv').sCategoryPermalink({current: '$categoryID'});</script>\n";
+	echo "<script type=\"text/javascript\">jQuery('#categorydiv, #taxonomy-product_cat').sCategoryPermalink({current: '$categoryID'});</script>\n";
 }
 
 // Update the post meta
@@ -192,15 +199,15 @@ function wpcp_update_permalink( $url, $post ) {
 			return $url;
 		}
 		
-		//Check if _category_permalink is set.
+		// Check if _category_permalink is set.
 		$category_permalink = get_post_meta( $post->ID, '_category_permalink', true );
-		if ( empty( $category_permalink ) || is_wp_error( $terms ) ) {
+		if ( empty( $category_permalink ) || is_wp_error( $category_permalink ) ) {
 			return $url;
 		} else {
 			$category_permalink = (int) $category_permalink;
 		}
 		
-		//Check if product belongs to any product category.
+		// Check if product belongs to any product category.
 		$terms = get_the_terms( $post->ID, 'product_cat' );
 		if ( empty( $terms ) || is_wp_error( $terms ) ) {
 			return $url;
@@ -212,7 +219,7 @@ function wpcp_update_permalink( $url, $post ) {
 			'link' => str_replace( '%product_cat%', rtrim( wpse85202_get_taxonomy_parents( $term->term_id, 'product_cat', false, '/', true ), '/' ), $permalink_structure ),
 			);
 		}
-	
+		
 		foreach ( $cats as $cat ) {
 			if ( $cat['id'] == $category_permalink ) {
 				return trailingslashit( site_url( trailingslashit( str_replace( array( '%year%', '%monthnum%', '%day%', '%hour%', '%minute%', '%second%', '%post_id%', '%postname%', '%author%' ), array( get_the_date( 'Y', $post->ID ), get_the_date( 'm', $post->ID ), get_the_date( 'd', $post->ID ), get_the_date( 'H', $post->ID ), get_the_date( 'i', $post->ID ), get_the_date( 's', $post->ID ), $post->ID, $post->post_name, get_the_author_meta( 'user_nicename', $post->post_author ) ), $cat['link']) ) . $post->post_name ) );

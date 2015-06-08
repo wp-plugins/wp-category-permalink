@@ -4,7 +4,7 @@ Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_i
 Tags: category, permalink, woocommerce
 Requires at least: 3.5
 Tested up to: 4.2.0
-Stable tag: 2.2.3
+Stable tag: 2.2.4
 
 Allows manual selection of a 'main' category for each post and WooCommerce product for better permalinks and SEO.
 
@@ -56,6 +56,11 @@ Of course. I don't like to see too many of those buttons neither ;) You can disa
 1. Pick the category you'd like to have for the permalink.
 
 == Changelog ==
+
+= 2.2.4
+* Fix: Better control for WooCommerce product permalink UI
+* Fix: WooCommerece Permalink Category
+* Fix: Allow for custom post types
 
 = 2.2.3
 * Fix: Product permalink bug (permalink appeared correctly only on product page).
