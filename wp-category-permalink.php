@@ -3,7 +3,7 @@
 Plugin Name: WP Category Permalink
 Plugin URI: http://apps.meow.fr
 Description: Allows manual selection of a 'main' category for each post for better permalinks and SEO. Pro version adds support for WooCommerce products.
-Version: 2.2.4
+Version: 2.2.6
 Author: Jordy Meow, Yaniv Friedensohn
 Author URI: http://www.meow.fr
 Remarks: This plugin was inspired by the Hikari Category Permalink. The way it works on the client-side is similar, and the JS file is actually the same one with a bit more code added to it.
@@ -36,7 +36,7 @@ add_filter( 'manage_posts_columns' , 'mwcp_manage_posts_columns' );
 function mwcp_manage_posts_columns( $columns ) {
 	global $post_type;
 	
-	if ('product' == $post_type && ! wpcp_woocommerce_support() ) {
+	if (wpcp_is_woocommerce_product( $post_type ) && !wpcp_woocommerce_support() ) {
 		return $columns;
 	}
 
@@ -53,7 +53,7 @@ add_action( 'manage_posts_custom_column' , 'mwcp_custom_columns', 10, 2 );
 function mwcp_custom_columns( $column, $post_id ) {
 	global $post_type;
 	
-	if ('product' == $post_type && ! wpcp_woocommerce_support() ) {
+	if ( wpcp_is_woocommerce_product( $post_type ) && !wpcp_woocommerce_support() ) {
 		return $column;
 	}
 	
@@ -96,6 +96,8 @@ function mwcp_custom_columns( $column, $post_id ) {
 	}
 }
 
+
+
 /**
  *
  * Post Edit CSS/JS + Update
@@ -108,7 +110,7 @@ function mwcp_admin_enqueue_scripts () {
 	global $post_type;
 
 	// If it's a WooCommerce product and wpcp_woocommerce_support() or wpcp_is_pro() are false then exit.
-	if ( 'product' == $post_type && ( ! wpcp_woocommerce_support() || ! wpcp_is_pro() ) ) {
+	if ( wpcp_is_woocommerce_product( $post_type ) && ( !wpcp_woocommerce_support() || ! wpcp_is_pro() ) ) {
 		return;
 	}
 	
@@ -216,7 +218,7 @@ function wpcp_update_permalink( $url, $post ) {
 		foreach ( $terms as $term ) {
 			$cats[] = array(
 			'id' => $term->term_id,
-			'link' => str_replace( '%product_cat%', rtrim( wpse85202_get_taxonomy_parents( $term->term_id, 'product_cat', false, '/', true ), '/' ), $permalink_structure ),
+			'link' => str_replace( '%product_cat%', rtrim( wpcp_get_taxonomy_parents( $term->term_id, 'product_cat', false, '/', true ), '/' ), $permalink_structure ),
 			);
 		}
 		
@@ -254,6 +256,10 @@ function wpcp_getoption( $option, $section, $default = '' ) {
 		return $options[$option];
   }
 	return $default;
+}
+
+function wpcp_is_woocommerce_product( $post_type ) {
+	return $post_type == 'product' && class_exists( 'woocommerce' );
 }
 
 /**
@@ -331,28 +337,22 @@ function wpcp_validate_pro( $subscr_id ) {
  * @param array $visited Optional. Already linked to categories to prevent duplicates.
  * @return string
  */
-function wpse85202_get_taxonomy_parents( $id, $taxonomy = 'category', $link = false, $separator = '/', $nicename = false, $visited = array() ) {
-
-            $chain = '';
-            $parent = get_term( $id, $taxonomy );
-
-            if ( is_wp_error( $parent ) )
-                    return $parent;
-
-            if ( $nicename )
-                    $name = $parent->slug;
-            else
-                    $name = $parent->name;
-
-            if ( $parent->parent && ( $parent->parent != $parent->term_id ) && !in_array( $parent->parent, $visited ) ) {
-                    $visited[] = $parent->parent;
-                    $chain .= wpse85202_get_taxonomy_parents( $parent->parent, $taxonomy, $link, $separator, $nicename, $visited );
-            }
-
-            if ( $link )
-                    $chain .= '<a href="' . esc_url( get_term_link( $parent,$taxonomy ) ) . '" title="' . esc_attr( sprintf( __( "View all posts in %s" ), $parent->name ) ) . '">'.$name.'</a>' . $separator;
-            else
-                    $chain .= $name.$separator;
-
-            return $chain;
-    }
+function wpcp_get_taxonomy_parents( $id, $taxonomy = 'category', $link = false, $separator = '/', $nicename = false, $visited = array() ) {
+	$chain = '';
+	$parent = get_term( $id, $taxonomy );
+	if ( is_wp_error( $parent ) )
+		return $parent;
+	if ( $nicename )
+		$name = $parent->slug;
+	else
+		$name = $parent->name;
+	if ( $parent->parent && ( $parent->parent != $parent->term_id ) && !in_array( $parent->parent, $visited ) ) {
+		$visited[] = $parent->parent;
+		$chain .= wpcp_get_taxonomy_parents( $parent->parent, $taxonomy, $link, $separator, $nicename, $visited );
+	}
+	if ( $link )
+		$chain .= '<a href="' . esc_url( get_term_link( $parent,$taxonomy ) ) . '" title="' . esc_attr( sprintf( __( "View all posts in %s" ), $parent->name ) ) . '">'.$name.'</a>' . $separator;
+	else
+		$chain .= $name.$separator;
+	return $chain;
+}
